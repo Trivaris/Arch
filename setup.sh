@@ -207,6 +207,8 @@ echo "Base system installation complete."
 # Generate fstab file for the newly mounted system
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
+systemctl daemon-reload
+
 clear
 
 # Display the generated fstab to the user for review
