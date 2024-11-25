@@ -136,11 +136,10 @@ mount "${partition_prefix}1" /boot/EFI
 
 # Install GRUB for UEFI systems
 echo -e "\e[31mInstalling GRUB for UEFI...\e[0m"
-if ! grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck; then
-    echo -e "\e[31mGRUB installation failed. Exiting.\e[0m"
-    exit 1
-fi
+grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
 
+echo -e "\e[31mGRUB installed.\e[0m"
+sleep 5
 
 clear
 ##########################################################################
@@ -152,7 +151,7 @@ echo -e "\e[31mCopying GRUB locale files...\e[0m"
 cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 
 # For German locale
-cp /usr/share/locale/de\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/de.mo
+cp /usr/share/locale/de/LC_MESSAGES/grub.mo /boot/grub/locale/de.mo
 
 ##########################################################################
 
