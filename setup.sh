@@ -238,7 +238,7 @@ arch-chroot /mnt sh ./chroot.sh "$partition_prefix"
 
 # Unmount all the filesystems
 echo "Unmounting all filesystems..."
-umount -a
+# umount -a
 
 ##########################################################################
 
