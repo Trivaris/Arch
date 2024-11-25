@@ -8,11 +8,7 @@ lvm="/dev/mapper/lvm"
 
 partition_prefix="${1}"
 
-
-echo "Volume group and logical volumes are correctly created:"
 echo "Volume group: $volgroup0"
-echo "Logical volume for root: $lv_root"
-echo "Logical volume for home: $lv_home"
 echo "Partition prefix: $partition_prefix"
 
 sleep 10

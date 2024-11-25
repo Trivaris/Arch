@@ -147,20 +147,20 @@ modprobe dm_mod
 vgscan
 vgchange -ay
 
-mkfs.ext4 "$lv_root"
-mkfs.ext4 "$lv_home"
+mkfs.ext4 "/dev/$volgroup0/$lv_root"
+mkfs.ext4 "/dev/$volgroup0/$lv_home"
 
 echo "Filesystems created: EXT4 on $lv_root and $lv_home."
 
 sleep 10
 
-mount "$lv_root" /mnt
+mount "/dev/$volgroup0/$lv_root" /mnt
 
 mkdir /mnt/boot
 mount "$partition2" /mnt/boot
 
 mkdir /mnt/home
-mount "$lv_home" /mnt/home
+mount "/dev/$volgroup0/$lv_home" /mnt/home
 
 echo "Mounted home logical volume: $lv_home"
 
