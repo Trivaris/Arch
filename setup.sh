@@ -15,19 +15,54 @@ fi
 
 echo "Available devices:"
 lsblk -d -n -o NAME,SIZE,MODEL
-echo -e "\e[31mEnter the device identifier (e.g., sda, nvme0n1):\e[0m "
-read device
+
+while true; do
+    echo -e "\e[31mEnter the device identifier (e.g., sda, nvme0n1):\e[0m "
+    read device
+    if [ ! -b "$selected_device" ]; then
+        echo "Invalid device selected. Try again."
+    else
+        break
+    fi
+done
 echo "You entered device: $device"
 
 selected_device="/dev/$device"
-
-# Check if the selected device exists and is a block device
-if [ ! -b "$selected_device" ]; then
-    echo "Invalid device selected. Exiting..."
-    exit 1
+if [[ "$selected_device" =~ ^/dev/nvme ]]; then
+    partition_prefix="${selected_device}p"
+else
+    partition_prefix="${selected_device}"
 fi
+partition1="${partition_prefix}1"
+partition2="${partition_prefix}2"
+partition3="${partition_prefix}3"
+echo "You entered device: $selected_device"
+echo "You entered partition1: $partition1"
+echo "You entered partition2: $partition2"
+echo "You entered partition3: $partition3"
 
-echo -e "\e[31mWarning: Partitioning will destroy data on $selected_device. Are you sure you want to continue? (y/n)\e[0m"
+sleep 5
+
+echo -e "\e[31mWhats your Passphrase?\e[0m"
+echo
+read passphrase
+echo -n -e "\e[31mEnter passphrase again:\e[0m "
+echo
+read -s passphrase2
+
+while true; do
+    if [ "$passphrase" != "$passphrase2" ]; then
+        echo "Passphrases do not match. Try again."
+    else
+        break
+    fi
+done
+volgroup0="volgroup0"
+lv_root="/dev/"$volgroup0"/lv_root"
+lv_home="/dev/"$volgroup0"/lv_home"
+lvm="/dev/mapper/lvm"
+
+echo -e "\e[31mWarning: Partitioning will permanently delete all data on $selected_device. Are you sure you want to continue? (y/n)\e[0m"
 read confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "Aborting partitioning."
@@ -39,93 +74,41 @@ echo -e "g\nn\n\n\n+1G\nn\n\n\n+1G\nn\n\n\n\n\nt\n3\n44\nw" | fdisk "$selected_d
 
 ##########################################################################
 
-# Check if the device is NVMe and adjust partition names
-if [[ "$selected_device" =~ ^/dev/nvme ]]; then
-    partition_prefix="${selected_device}p"
-else
-    partition_prefix="${selected_device}"
-fi
-
-# Create FAT32 filesystem on partition 1
-mkfs.fat -F32 "${partition_prefix}1"
-
-# Create EXT4 filesystem on partition 2
-mkfs.ext4 "${partition_prefix}2"
+mkfs.fat -F32 "$partition1"
+mkfs.ext4 "$partition2"
 
 clear
 
-echo "Filesystems created: FAT32 on ${partition_prefix}1 and EXT4 on ${partition_prefix}2."
+echo "Filesystems created: FAT32 on ${partition1} and EXT4 on ${partition2}."
 
 ##########################################################################
 
-partition3="${partition_prefix}3"
 
-# LUKS encryption on partition 3
-echo -n -e "\e[31mEnter passphrase for LUKS encryption:\e[0m "
-echo
-read -s passphrase
-echo -n -e "\e[31mEnter passphrase again:\e[0m "
-echo
-read -s passphrase2
 
-if [ "$passphrase" != "$passphrase2" ]; then
-    echo "Passphrases do not match. Exiting..."
-    exit 1
-fi  
-
+echo -e "\e[31mEncrypting $partition3...\e[0m"
 echo -n "$passphrase" | cryptsetup luksFormat "$partition3" --batch-mode
-
-# Open the LUKS partition
 echo -n "$passphrase" | cryptsetup open --type luks "$partition3" lvm
 
-volgroup0="volgroup0"
-lv_root="/dev/"$volgroup0"/lv_root"
-lv_home="/dev/"$volgroup0"/lv_home"
-lvm="/dev/mapper/lvm"
-
-# Create physical volume
 pvcreate "$lvm"
-
-# Create volume group
 vgcreate "$volgroup0" "$lvm"
 
-# Create logical volume for root (user input or default 30GB)
-# Default values for logical volumes
+read -p $'\e[31mEnter size for lv_root (press Enter for default 30GB):\e[0m ' lv_root_size
+lv_root_size=${lv_root_size:-30GB}
 
-# Prompt for lv_root size with default value
-echo -n -e "\e[31mEnter size for lv_root (press Enter for default 30GB):\e[0m "
-read lv_root_size
-if [ -z "$lv_root_size" ]; then
-    lv_root_size="30GB"
-fi
+read -p $'\e[31mEnter size for lv_home (press Enter for default 200GB):\e[0m ' lv_home_size
+lv_home_size=${lv_home_size:-200GB}
 
-# Prompt for lv_home size with default value
-echo -n -e "\e[31mEnter size for lv_home (press Enter for default 200GB):\e[0m "
-read lv_home_size
-if [ -z "$lv_home_size" ]; then
-    lv_home_size="200GB"
-fi
+create_lv() {
+    lvcreate -L "$1" "$volgroup0" -n "$2" || { 
+        echo "Failed to create logical volume for $2. Exiting..."; 
+        exit 1; 
+    }
+}
 
-
-# Create logical volume for root
-lvcreate -L "$lv_root_size" "$volgroup0" -n "$lv_root"
-if [ $? -ne 0 ]; then
-    echo "Failed to create logical volume for root. Exiting..."
-    exit 1
-fi
-
-# Create logical volume for home
-lvcreate -L "$lv_home_size" "$volgroup0" -n "$lv_home"
-if [ $? -ne 0 ]; then
-    echo "Failed to create logical volume for home. Exiting..."
-    exit 1
-fi
+create_lv "$lv_root_size" "$lv_root"
+create_lv "$lv_home_size" "$lv_home"
 
 echo "Logical volumes created successfully!"
-
-
-# Store the device and volume names in variables
-
 
 echo "LVM setup complete:"
 echo "Physical volume: $lvm"
@@ -137,88 +120,58 @@ sleep 10
 
 ##########################################################################
 
-# Check that the volume group exists
-vgdisplay "$volgroup0" > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error: Volume group '$volgroup0' does not exist. Exiting..."
-    exit 1
-fi
+check_exists() {
+    $1 > /dev/null 2>&1 || { 
+        echo "Error: $2. Exiting..."; 
+        exit 1; 
+    }
+}
 
-# Check that the logical volumes exist
-lvdisplay /dev/volgroup0/lv_root > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error: Logical volume '$lv_root' does not exist. Exiting..."
-    exit 1
-fi
-
-lvdisplay /dev/volgroup0/lv_home > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error: Logical volume '$lv_home' does not exist. Exiting..."
-    exit 1
-fi
-
+check_exists "vgdisplay $volgroup0" "Volume group '$volgroup0' does not exist"
+check_exists "lvdisplay /dev/volgroup0/lv_root" "Logical volume '$lv_root' does not exist"
+check_exists "lvdisplay /dev/volgroup0/lv_home" "Logical volume '$lv_home' does not exist"
 
 echo "Volume group and logical volumes are correctly created:"
 echo "Volume group: $volgroup0"
 echo "Logical volume for root: $lv_root"
 echo "Logical volume for home: $lv_home"
 
-##########################################################################
+sleep 10
 
-# Load necessary kernel module for LVM
 modprobe dm_mod
-
-# Scan for volume groups
 vgscan
-
-# Activate the volume group
 vgchange -ay
 
-##########################################################################
-
-# Create EXT4 filesystems on the logical volumes
 mkfs.ext4 "$lv_root"
 mkfs.ext4 "$lv_home"
 
 echo "Filesystems created: EXT4 on $lv_root and $lv_home."
 
-##########################################################################
+sleep 10
 
-# Mount the root logical volume
 mount "$lv_root" /mnt
 
-# Create and mount boot directory (assuming partition2 is the boot partition)
 mkdir /mnt/boot
-mount "${partition_prefix}2" /mnt/boot
+mount "$partition2" /mnt/boot
 
-
-# Create and mount home directory
 mkdir /mnt/home
 mount "$lv_home" /mnt/home
 
 echo "Mounted home logical volume: $lv_home"
 
-##########################################################################
+sleep 10
 
-# Install the base system using pacstrap
 pacstrap /mnt base
-
 echo "Base system installation complete."
 
-##########################################################################
+sleep 10
 
-# Generate fstab file for the newly mounted system
 genfstab -U -p /mnt >> /mnt/etc/fstab
-
-systemctl daemon-reload
-
 clear
 
-# Display the generated fstab to the user for review
 echo "Here is the generated /etc/fstab:"
 cat /mnt/etc/fstab
 
-# Ask the user if the fstab looks correct
 echo -n "Does the /etc/fstab file look correct? (y/n): "
 read fstab_confirm
 
@@ -229,22 +182,15 @@ fi
 
 echo "Proceeding with arch-chroot..."
 
-##########################################################################
-
 curl -o /mnt/chroot.sh https://raw.githubusercontent.com/Trivaris/Arch/refs/heads/main/chroot.sh
 chmod +x /mnt/chroot.sh
 
 mkdir /mnt/boot/EFI
 
-# Chroot into the new system
 arch-chroot /mnt sh ./chroot.sh "$partition_prefix"
 
-# Unmount all the filesystems
-echo "Unmounting all filesystems..."
-# umount -a
+#echo "Unmounting all filesystems..."
+#umount -a
 
-##########################################################################
-
-# Final message to the user
 echo "The script has finished successfully."
 echo "Please reboot your system now."
