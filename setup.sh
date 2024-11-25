@@ -83,10 +83,9 @@ vgcreate volgroup0 /dev/mapper/lvm
 # Create logical volume for root (user input or default 30GB)
 echo -n "Enter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB): "
 read lv_root_size
-# Calculate remaining space after allocating lv_root
-total_space=$(vgs --noheadings -o vg_size --units G volgroup0)
-lv_root_size=${lv_root_size:-30G}
-remaining_space=$(echo "$total_space - $lv_root_size" | bc)
+
+echo -n "Enter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB): "
+read lv_home_size
 
 lvcreate -L "$lv_root_size" volgroup0 -n lv_root
 if [ $? -ne 0 ]; then
@@ -94,7 +93,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-lvcreate -L "$remaining_space" volgroup0 -n lv_home
+lvcreate -L "$lv_home_size" volgroup0 -n lv_home
 if [ $? -ne 0 ]; then
     echo "Failed to create logical volume for home. Exiting..."
     exit 1
