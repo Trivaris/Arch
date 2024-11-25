@@ -2,8 +2,8 @@
 clear
 
 volgroup0="volgroup0"
-lv_root="/dev/"$volgroup0"/lv_root"
-lv_home="/dev/"$volgroup0"/lv_home"
+lv_root="lv_root"
+lv_home="lv_home"
 lvm="/dev/mapper/lvm"
 
 partition_prefix="${1}"

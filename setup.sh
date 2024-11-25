@@ -59,8 +59,8 @@ while true; do
     fi
 done
 volgroup0="volgroup0"
-lv_root="/dev/"$volgroup0"/lv_root"
-lv_home="/dev/"$volgroup0"/lv_home"
+lv_root="lv_root"
+lv_home="lv_home"
 lvm="/dev/mapper/lvm"
 
 echo -e "\e[31mWarning: Partitioning will permanently delete all data on $selected_device. Are you sure you want to continue? (y/n)\e[0m"
