@@ -220,8 +220,8 @@ echo "Proceeding with arch-chroot..."
 
 ##########################################################################
 
-# Chroot into the new system
-arch-chroot /mnt
+# Enter the chroot environment
+arch-chroot /mnt <<EOF
 
 ##########################################################################
 
@@ -234,11 +234,11 @@ passwd
 # Ask for a new username and create the user
 echo -n "Enter a username to create: "
 read username
-useradd -m -g users -G wheel "$username"
+useradd -m -g users -G wheel "\$username"
 
 # Set password for the new user
-echo -n "Enter the password for the user $username: "
-passwd "$username"
+echo -n "Enter the password for the user \$username: "
+passwd "\$username"
 
 ##########################################################################
 
@@ -263,13 +263,13 @@ echo -n "Do you have an Intel or Nvidia GPU? (intel/nvidia): "
 read gpu_choice
 
 # Install GPU drivers based on user input
-if [[ "$gpu_choice" == "intel" ]]; then
+if [[ "\$gpu_choice" == "intel" ]]; then
     # Install Intel GPU drivers
     pacman -S mesa --noconfirm
     pacman -S intel-media-driver --noconfirm
     echo "Intel GPU drivers installed."
 
-elif [[ "$gpu_choice" == "nvidia" ]]; then
+elif [[ "\$gpu_choice" == "nvidia" ]]; then
     # Install Nvidia GPU drivers
     pacman -S nvidia nvidia-utils nvidia-lts --noconfirm
     echo "Nvidia GPU drivers installed."
@@ -284,22 +284,22 @@ fi
 echo "Modifying /etc/mkinitcpio.conf to include 'encrypt' and 'lvm2' in HOOKS..."
 
 # Backup the original mkinitcpio.conf before modifying
-cp /mnt/etc/mkinitcpio.conf /mnt/etc/mkinitcpio.conf.bak
+cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
 
 # Use sed to insert "encrypt" and "lvm2" between "block" and "filesystems" in the HOOKS line
-sed -i 's/\(HOOKS=\([^\)]*\)block\)/\1 encrypt lvm2/' /mnt/etc/mkinitcpio.conf
+sed -i 's/\(HOOKS=\([^\)]*\)block\)/\1 encrypt lvm2/' /etc/mkinitcpio.conf
 
 # Verify the modification
 echo "Updated HOOKS line:"
-grep "^HOOKS=" /mnt/etc/mkinitcpio.conf
+grep "^HOOKS=" /etc/mkinitcpio.conf
 
 ##########################################################################
 
 # Regenerate initramfs for both linux and linux-lts kernels
 echo "Regenerating initramfs for linux and linux-lts kernels..."
 
-arch-chroot /mnt mkinitcpio -p linux
-arch-chroot /mnt mkinitcpio -p linux-lts
+mkinitcpio -p linux
+mkinitcpio -p linux-lts
 
 ##########################################################################
 
@@ -307,18 +307,18 @@ arch-chroot /mnt mkinitcpio -p linux-lts
 echo "Modifying /etc/locale.gen to enable 'en_US.UTF-8' and 'de_DE.UTF-8' locales..."
 
 # Uncomment en_US.UTF-8 and de_DE.UTF-8 lines in /etc/locale.gen
-sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /mnt/etc/locale.gen
-sed -i 's/^#de_DE.UTF-8/de_DE.UTF-8/' /mnt/etc/locale.gen
+sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+sed -i 's/^#de_DE.UTF-8/de_DE.UTF-8/' /etc/locale.gen
 
 # Verify the modification
 echo "Updated /etc/locale.gen:"
-grep -E "en_US.UTF-8|de_DE.UTF-8" /mnt/etc/locale.gen
+grep -E "en_US.UTF-8|de_DE.UTF-8" /etc/locale.gen
 
 ##########################################################################
 
 # Generate the locales
 echo "Running locale-gen..."
-arch-chroot /mnt locale-gen
+locale-gen
 
 ##########################################################################
 
@@ -326,23 +326,23 @@ arch-chroot /mnt locale-gen
 echo "Modifying /etc/default/grub to include 'cryptdevice=/dev/partition3:volgroup0'..."
 
 # Use sed to add cryptdevice between loglevel=3 and quiet
-sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice=\/dev\/partition3:volgroup0/' /mnt/etc/default/grub
+sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice=\/dev\/partition3:volgroup0/' /etc/default/grub
 
 # Verify the modification
 echo "Updated GRUB_CMDLINE_LINUX_DEFAULT:"
-grep "^GRUB_CMDLINE_LINUX_DEFAULT=" /mnt/etc/default/grub
+grep "^GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub
 
 ##########################################################################
 
 # Create the EFI directory and mount the EFI partition
 echo "Creating /boot/EFI and mounting the EFI partition..."
 
-mkdir -p /mnt/boot/EFI
-mount "${partition_prefix}1" /mnt/boot/EFI
+mkdir -p /boot/EFI
+mount "${partition_prefix}1" /boot/EFI
 
 # Install GRUB for UEFI systems
 echo "Installing GRUB for UEFI..."
-arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
+grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
 
 ##########################################################################
 
@@ -350,29 +350,30 @@ arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=grub_uefi --re
 echo "Copying GRUB locale files..."
 
 # For English locale
-cp /mnt/usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/en.mo
+cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 
 # For German locale
-cp /mnt/usr/share/locale/de\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/de.mo
+cp /usr/share/locale/de\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/de.mo
 
 ##########################################################################
 
 # Regenerate GRUB configuration file
 echo "Regenerating GRUB configuration file..."
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+grub-mkconfig -o /boot/grub/grub.cfg
 
 ##########################################################################
 
 # Enable necessary system services
 echo "Enabling GDM (GNOME Display Manager) and NetworkManager..."
-arch-chroot /mnt systemctl enable gdm
-arch-chroot /mnt systemctl enable NetworkManager
+systemctl enable gdm
+systemctl enable NetworkManager
+
+EOF
 
 ##########################################################################
 
 # Exit the chroot environment
 echo "Exiting chroot environment..."
-exit
 
 ##########################################################################
 
