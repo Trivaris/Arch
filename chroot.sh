@@ -5,6 +5,12 @@
 echo -n "Enter the LUKS partition (e.g., sda3): "
 read partition3
 
+if [[ "$partition3" =~ ^/dev/nvme ]]; then
+    partition_prefix="${partition3}p"
+else
+    partition_prefix="${partition3}"
+fi
+
 echo -n "Enter the root password: "
 passwd
 
@@ -112,7 +118,7 @@ locale-gen
 echo "Modifying /etc/default/grub to include 'cryptdevice=/dev/$partition3:volgroup0'..."
 
 # Use sed to add cryptdevice between loglevel=3 and quiet
-sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice=\/dev\/'$partition3':volgroup0/' /etc/default/grub
+sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice=\/dev\/'$partition3':volgroup0 quiet/' /etc/default/grub
 
 # Verify the modification
 echo "Updated GRUB_CMDLINE_LINUX_DEFAULT:"
