@@ -22,7 +22,9 @@ passwd "$username"
 ##########################################################################
 
 # Install essential packages and desktop environment
-pacman -S base-devel dosfstools grub efibootmgr gnome gnome-tweaks lvm2 mtools nvim networkmanager openssh os-prober sudo --noconfirm
+pacman -S base-devel dosfstools grub efibootmgr gnome gnome-tweaks lvm2 mtools neovim networkmanager openssh sudo --noconfirm
+
+sleep 1
 
 # Enable SSH service
 systemctl enable sshd
