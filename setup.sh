@@ -72,7 +72,11 @@ fi
 # Partition the disk with fdisk
 echo -e "g\nn\n\n\n+1G\nn\n\n\n+1G\nn\n\n\n\n\nt\n3\n44\nw" | fdisk "$selected_device"
 
-##########################################################################
+clear
+
+echo -e "p" | fdisk "$selected_device"
+
+sleep 10
 
 mkfs.fat -F32 "$partition1"
 mkfs.ext4 "$partition2"
