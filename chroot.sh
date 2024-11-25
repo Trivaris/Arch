@@ -83,7 +83,8 @@ clear
 
 echo -e "\e[31mModifying /etc/default/grub"
 
-sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice='${partition_prefix}3':'$volgroup0' quiet/' /etc/default/grub
+new_line="GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 cryptdevice=${partition_prefix}3:${volgroup0} quiet\""
+sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|${new_line}|" /etc/default/grub
 
 echo -e "\e[31mUpdated GRUB_CMDLINE_LINUX_DEFAULT:\e[0m"
 grep "^GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub
