@@ -15,7 +15,7 @@ fi
 
 echo "Available devices:"
 lsblk -d -n -o NAME,SIZE,MODEL
-echo "\e[31mEnter the device identifier (e.g., sda, nvme0n1):\e[0m "
+echo -e "\e[31mEnter the device identifier (e.g., sda, nvme0n1):\e[0m "
 read device
 echo "You entered device: $device"
 
@@ -27,7 +27,7 @@ if [ ! -b "$selected_device" ]; then
     exit 1
 fi
 
-echo "\e[31mWarning: Partitioning will destroy data on $selected_device. Are you sure you want to continue? (y/n)\e[0m"
+echo -e "\e[31mWarning: Partitioning will destroy data on $selected_device. Are you sure you want to continue? (y/n)\e[0m"
 read confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "Aborting partitioning."
@@ -61,10 +61,10 @@ echo "Filesystems created: FAT32 on ${partition_prefix}1 and EXT4 on ${partition
 partition3="${partition_prefix}3"
 
 # LUKS encryption on partition 3
-echo -n "\e[31mEnter passphrase for LUKS encryption:\e[0m "
+echo -n -e "\e[31mEnter passphrase for LUKS encryption:\e[0m "
 echo
 read -s passphrase
-echo -n "\e[31mEnter passphrase again:\e[0m "
+echo -n -e "\e[31mEnter passphrase again:\e[0m "
 echo
 read -s passphrase2
 
@@ -88,14 +88,14 @@ vgcreate volgroup0 /dev/mapper/lvm
 # Default values for logical volumes
 
 # Prompt for lv_root size with default value
-echo -n "\e[31mEnter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB):\e[0m "
+echo -n -e "\e[31mEnter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB):\e[0m "
 read lv_root_size
 if [ -z "$lv_root_size" ]; then
     lv_root_size="30G"
 fi
 
 # Prompt for lv_home size with default value
-echo -n "\e[31mEnter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB):\e[0m "
+echo -n -e "\e[31mEnter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB):\e[0m "
 read lv_home_size
 if [ -z "$lv_home_size" ]; then
     lv_home_size="200G"
