@@ -15,10 +15,10 @@ fi
 
 echo "Available devices:"
 lsblk -d -n -o NAME,SIZE,MODEL
-
-# Prompt user to select a device
 echo "Enter the device identifier (e.g., sda, nvme0n1): "
 read device
+echo "You entered device: $device"
+
 selected_device="/dev/$device"
 
 # Check if the selected device exists and is a block device
