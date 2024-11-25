@@ -37,7 +37,6 @@ fi
 # Partition the disk with fdisk
 echo -e "g\nn\n\n\n+1G\nn\n\n\n+1G\nn\n\n\n\n\nt\n3\n44\nw" | fdisk "$selected_device"
 
-
 ##########################################################################
 
 # Check if the device is NVMe and adjust partition names
@@ -47,7 +46,6 @@ else
     partition_prefix="${selected_device}"
 fi
 
-
 # Create FAT32 filesystem on partition 1
 mkfs.fat -F32 "${partition_prefix}1"
 
@@ -56,13 +54,6 @@ mkfs.ext4 "${partition_prefix}2"
 
 echo "Filesystems created: FAT32 on ${partition_prefix}1 and EXT4 on ${partition_prefix}2."
 
-# Device and partition setup (assuming partition naming logic from previous steps)
-if [[ "$selected_device" =~ ^/dev/nvme ]]; then
-    partition_prefix="${selected_device}p"
-else
-    partition_prefix="${selected_device}"
-fi
-
 ##########################################################################
 
 partition3="${partition_prefix}3"
@@ -70,6 +61,14 @@ partition3="${partition_prefix}3"
 # LUKS encryption on partition 3
 echo -n "Enter passphrase for LUKS encryption: "
 read -s passphrase
+echo -n "Enter passphrase again: "
+read -s passphrase2
+
+if [ "$passphrase" != "$passphrase2" ]; then
+    echo "Passphrases do not match. Exiting..."
+    exit 1
+fi  
+
 echo -n "$passphrase" | cryptsetup luksFormat "$partition3" --batch-mode
 
 # Open the LUKS partition
@@ -96,7 +95,10 @@ if [ $? -ne 0 ]; then
 fi
 
 lvcreate -L "$remaining_space" volgroup0 -n lv_home
-
+if [ $? -ne 0 ]; then
+    echo "Failed to create logical volume for home. Exiting..."
+    exit 1
+fi
 
 # Store the device and volume names in variables
 lv_root="/dev/volgroup0/lv_root"
@@ -112,8 +114,6 @@ echo "Logical volume for home: $lv_home"
 
 ##########################################################################
 
-#!/bin/bash
-
 # Check that the volume group exists
 vgdisplay volgroup0 > /dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -122,17 +122,18 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check that the logical volumes exist
-lvdisplay "$lv_root" > /dev/null 2>&1
+lvdisplay /dev/volgroup0/lv_root > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo "Error: Logical volume '$lv_root' does not exist. Exiting..."
+    echo "Error: Logical volume '/dev/volgroup0/lv_root' does not exist. Exiting..."
     exit 1
 fi
 
-lvdisplay "$lv_home" > /dev/null 2>&1
+lvdisplay /dev/volgroup0/lv_home > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo "Error: Logical volume '$lv_home' does not exist. Exiting..."
+    echo "Error: Logical volume '/dev/volgroup0/lv_home' does not exist. Exiting..."
     exit 1
 fi
+
 
 echo "Volume group and logical volumes are correctly created:"
 echo "Volume group: volgroup0"
