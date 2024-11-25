@@ -2,7 +2,8 @@
 clear
 
 # Set the root password
-partition3="${1}3"
+partition_prefix="${1}"
+partition3="${partition_prefix}3"
 
 echo -n -e "\e[31mEnter the root password:\e[0m "
 passwd
