@@ -15,7 +15,7 @@ fi
 
 echo "Available devices:"
 lsblk -d -n -o NAME,SIZE,MODEL
-echo "Enter the device identifier (e.g., sda, nvme0n1): "
+echo "\e[31mEnter the device identifier (e.g., sda, nvme0n1):\e[0m "
 read device
 echo "You entered device: $device"
 
@@ -27,7 +27,7 @@ if [ ! -b "$selected_device" ]; then
     exit 1
 fi
 
-echo "Warning: Partitioning will destroy data on $selected_device. Are you sure you want to continue? (y/n)"
+echo "\e[31mWarning: Partitioning will destroy data on $selected_device. Are you sure you want to continue? (y/n)\e[0m"
 read confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "Aborting partitioning."
@@ -52,6 +52,8 @@ mkfs.fat -F32 "${partition_prefix}1"
 # Create EXT4 filesystem on partition 2
 mkfs.ext4 "${partition_prefix}2"
 
+clear
+
 echo "Filesystems created: FAT32 on ${partition_prefix}1 and EXT4 on ${partition_prefix}2."
 
 ##########################################################################
@@ -59,11 +61,11 @@ echo "Filesystems created: FAT32 on ${partition_prefix}1 and EXT4 on ${partition
 partition3="${partition_prefix}3"
 
 # LUKS encryption on partition 3
-echo -n "Enter passphrase for LUKS encryption: "
-echo -n ""
+echo -n "\e[31mEnter passphrase for LUKS encryption:\e[0m "
+echo
 read -s passphrase
-echo -n "Enter passphrase again: "
-echo -n ""
+echo -n "\e[31mEnter passphrase again:\e[0m "
+echo
 read -s passphrase2
 
 if [ "$passphrase" != "$passphrase2" ]; then
@@ -86,14 +88,14 @@ vgcreate volgroup0 /dev/mapper/lvm
 # Default values for logical volumes
 
 # Prompt for lv_root size with default value
-echo -n "Enter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB): "
+echo -n "\e[31mEnter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB):\e[0m "
 read lv_root_size
 if [ -z "$lv_root_size" ]; then
     lv_root_size="30G"
 fi
 
 # Prompt for lv_home size with default value
-echo -n "Enter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB): "
+echo -n "\e[31mEnter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB):\e[0m "
 read lv_home_size
 if [ -z "$lv_home_size" ]; then
     lv_home_size="200G"
@@ -196,7 +198,7 @@ echo "Mounted home logical volume: /dev/volgroup0/lv_home"
 ##########################################################################
 
 # Install the base system using pacstrap
-pacstrap -i /mnt base
+pacstrap /mnt base
 
 echo "Base system installation complete."
 
@@ -204,6 +206,8 @@ echo "Base system installation complete."
 
 # Generate fstab file for the newly mounted system
 genfstab -U -p /mnt >> /mnt/etc/fstab
+
+clear
 
 # Display the generated fstab to the user for review
 echo "Here is the generated /etc/fstab:"
