@@ -121,7 +121,7 @@ grep "^GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub
 # Create the EFI directory and mount the EFI partition
 echo "Creating /boot/EFI and mounting the EFI partition..."
 
-mkdir -p /boot/EFI
+mkdir /boot/EFI
 mount "${partition_prefix}1" /boot/EFI
 
 # Install GRUB for UEFI systems
