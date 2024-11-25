@@ -78,39 +78,44 @@ echo -n "$passphrase" | cryptsetup luksFormat "$partition3" --batch-mode
 # Open the LUKS partition
 echo -n "$passphrase" | cryptsetup open --type luks "$partition3" lvm
 
+volgroup0="volgroup0"
+lv_root="/dev/"$volgroup0"/lv_root"
+lv_home="/dev/"$volgroup0"/lv_home"
+lvm="/dev/mapper/lvm"
+
 # Create physical volume
-pvcreate /dev/mapper/lvm
+pvcreate "$lvm"
 
 # Create volume group
-vgcreate volgroup0 /dev/mapper/lvm
+vgcreate "$volgroup0" "$lvm"
 
 # Create logical volume for root (user input or default 30GB)
 # Default values for logical volumes
 
 # Prompt for lv_root size with default value
-echo -n -e "\e[31mEnter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB):\e[0m "
+echo -n -e "\e[31mEnter size for lv_root (press Enter for default 30GB):\e[0m "
 read lv_root_size
 if [ -z "$lv_root_size" ]; then
-    lv_root_size="30G"
+    lv_root_size="30GB"
 fi
 
 # Prompt for lv_home size with default value
-echo -n -e "\e[31mEnter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB):\e[0m "
+echo -n -e "\e[31mEnter size for lv_home (press Enter for default 200GB):\e[0m "
 read lv_home_size
 if [ -z "$lv_home_size" ]; then
-    lv_home_size="200G"
+    lv_home_size="200GB"
 fi
 
 
 # Create logical volume for root
-lvcreate -L "$lv_root_size" volgroup0 -n lv_root
+lvcreate -L "$lv_root_size" "$volgroup0" -n "$lv_root"
 if [ $? -ne 0 ]; then
     echo "Failed to create logical volume for root. Exiting..."
     exit 1
 fi
 
 # Create logical volume for home
-lvcreate -L "$lv_home_size" volgroup0 -n lv_home
+lvcreate -L "$lv_home_size" "$volgroup0" -n "$lv_home"
 if [ $? -ne 0 ]; then
     echo "Failed to create logical volume for home. Exiting..."
     exit 1
@@ -120,42 +125,41 @@ echo "Logical volumes created successfully!"
 
 
 # Store the device and volume names in variables
-lv_root="/dev/volgroup0/lv_root"
-lv_home="/dev/volgroup0/lv_home"
-volgroup0="volgroup0"
-lvm="/dev/mapper/lvm"
+
 
 echo "LVM setup complete:"
-echo "Physical volume: /dev/mapper/lvm"
+echo "Physical volume: $lvm"
 echo "Volume group: $volgroup0"
 echo "Logical volume for root: $lv_root"
 echo "Logical volume for home: $lv_home"
 
+sleep 10
+
 ##########################################################################
 
 # Check that the volume group exists
-vgdisplay volgroup0 > /dev/null 2>&1
+vgdisplay "$volgroup0" > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo "Error: Volume group 'volgroup0' does not exist. Exiting..."
+    echo "Error: Volume group '$volgroup0' does not exist. Exiting..."
     exit 1
 fi
 
 # Check that the logical volumes exist
 lvdisplay /dev/volgroup0/lv_root > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo "Error: Logical volume '/dev/volgroup0/lv_root' does not exist. Exiting..."
+    echo "Error: Logical volume '$lv_root' does not exist. Exiting..."
     exit 1
 fi
 
 lvdisplay /dev/volgroup0/lv_home > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-    echo "Error: Logical volume '/dev/volgroup0/lv_home' does not exist. Exiting..."
+    echo "Error: Logical volume '$lv_home' does not exist. Exiting..."
     exit 1
 fi
 
 
 echo "Volume group and logical volumes are correctly created:"
-echo "Volume group: volgroup0"
+echo "Volume group: $volgroup0"
 echo "Logical volume for root: $lv_root"
 echo "Logical volume for home: $lv_home"
 
@@ -173,27 +177,26 @@ vgchange -ay
 ##########################################################################
 
 # Create EXT4 filesystems on the logical volumes
-mkfs.ext4 /dev/volgroup0/lv_root
-mkfs.ext4 /dev/volgroup0/lv_home
+mkfs.ext4 "$lv_root"
+mkfs.ext4 "$lv_home"
 
-echo "Filesystems created: EXT4 on lv_root and lv_home."
+echo "Filesystems created: EXT4 on $lv_root and $lv_home."
 
 ##########################################################################
 
 # Mount the root logical volume
-mount /dev/volgroup0/lv_root /mnt
+mount "$lv_root" /mnt
 
 # Create and mount boot directory (assuming partition2 is the boot partition)
 mkdir /mnt/boot
 mount "${partition_prefix}2" /mnt/boot
 
-echo "Mounted boot partition: ${partition_prefix}2"
 
 # Create and mount home directory
 mkdir /mnt/home
-mount /dev/volgroup0/lv_home /mnt/home
+mount "$lv_home" /mnt/home
 
-echo "Mounted home logical volume: /dev/volgroup0/lv_home"
+echo "Mounted home logical volume: $lv_home"
 
 ##########################################################################
 

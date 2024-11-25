@@ -2,6 +2,11 @@
 clear
 
 # Set the root password
+volgroup0="volgroup0"
+lv_root="/dev/"$volgroup0"/lv_root"
+lv_home="/dev/"$volgroup0"/lv_home"
+lvm="/dev/mapper/lvm"
+
 partition_prefix="${1}"
 partition3="${partition_prefix}3"
 
@@ -114,10 +119,10 @@ clear
 ##########################################################################
 
 # Modify /etc/default/grub to include cryptdevice option
-echo -e "\e[31mModifying /etc/default/grub to include 'cryptdevice=/dev/$partition3:volgroup0'...\e[0m"
+echo -e "\e[31mModifying /etc/default/grub to include 'cryptdevice=$partition3:volgroup0'...\e[0m"
 
 # Use sed to add cryptdevice between loglevel=3 and quiet
-sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice=\/dev\/'$partition3':volgroup0 quiet/' /etc/default/grub
+sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice='$partition3':'$volgroup0' quiet/' /etc/default/grub
 
 # Verify the modification
 echo -e "\e[31mUpdated GRUB_CMDLINE_LINUX_DEFAULT:\e[0m"
