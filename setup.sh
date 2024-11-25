@@ -141,6 +141,12 @@ echo "Volume group: $volgroup0"
 echo "Logical volume for root: $lv_root"
 echo "Logical volume for home: $lv_home"
 
+echo
+
+echo "vgdisplay"
+echo
+echo "lvdisplay"
+
 sleep 10
 
 modprobe dm_mod
