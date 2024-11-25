@@ -196,7 +196,7 @@ echo "Mounted home logical volume: /dev/volgroup0/lv_home"
 ##########################################################################
 
 # Install the base system using pacstrap
-pacstrap -i /mnt base --no-confirm
+y | pacstrap -i /mnt base --no-confirm
 
 echo "Base system installation complete."
 
