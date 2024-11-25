@@ -68,12 +68,6 @@ cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
 # Use sed to insert "encrypt" and "lvm2" between "block" and "filesystems" in the HOOKS line
 sed -i 's/\(HOOKS=\([^\)]*\)block\)/\1 encrypt lvm2/' /etc/mkinitcpio.conf
 
-cat /etc/mkinitcpio.conf
-
-echo "\e[31mRead the HOOKS line and press Enter to continue...\e[0m"
-read
-sleep 10
-
 echo "\e[31mUpdated HOOKS line:\e[0m"
 grep "^HOOKS=" /etc/mkinitcpio.conf
 
@@ -123,6 +117,7 @@ echo "\e[31mCreating /boot/EFI and mounting the EFI partition...\e[0m"
 
 mkdir /boot/EFI
 mount "${partition_prefix}1" /boot/EFI
+read test
 
 # Install GRUB for UEFI systems
 echo "\e[31mInstalling GRUB for UEFI...\e[0m"
