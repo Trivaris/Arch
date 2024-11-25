@@ -23,7 +23,7 @@ while true; do
     selected_device="/dev/$device"
 
     if [ ! -b "$selected_device" ]; then
-        echo "Invalid device selected. Try again."
+        echo "Invalid device. Try again."
     else
         break
     fi
