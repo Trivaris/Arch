@@ -19,15 +19,16 @@ lsblk -d -n -o NAME,SIZE,MODEL
 while true; do
     echo -e "\e[31mEnter the device identifier (e.g., sda, nvme0n1):\e[0m "
     read device
+    echo "You entered device: $device"
+    selected_device="/dev/$device"
+
     if [ ! -b "$selected_device" ]; then
         echo "Invalid device selected. Try again."
     else
         break
     fi
 done
-echo "You entered device: $device"
 
-selected_device="/dev/$device"
 if [[ "$selected_device" =~ ^/dev/nvme ]]; then
     partition_prefix="${selected_device}p"
 else
