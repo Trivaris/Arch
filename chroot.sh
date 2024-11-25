@@ -42,24 +42,26 @@ clear
 ##########################################################################
 
 # Ask the user about their GPU (Intel or Nvidia)
-echo -n -e "\e[31mDo you have an Intel or Nvidia GPU? (intel/nvidia):\e[0m "
-read gpu_choice
+while true; do
+    echo -n -e "\e[31mDo you have an Intel or Nvidia GPU? (intel/nvidia):\e[0m "
+    read gpu_choice
 
-# Install GPU drivers based on user input
-if [[ "$gpu_choice" == "intel" ]]; then
-    # Install Intel GPU drivers
-    pacman -S mesa --noconfirm
-    pacman -S intel-media-driver --noconfirm
-    echo -e "\e[31mIntel GPU drivers installed.\e[0m"
-
-elif [[ "$gpu_choice" == "nvidia" ]]; then
-    # Install Nvidia GPU drivers
-    pacman -S nvidia nvidia-utils nvidia-lts --noconfirm
+    if [[ "$gpu_choice" == "intel" ]]; then
+        # Install Intel GPU drivers
+        pacman -S mesa --noconfirm
+        pacman -S intel-media-driver --noconfirm
+        echo -e "\e[31mIntel GPU drivers installed.\e[0m"
+        break
+    elif [[ "$gpu_choice" == "nvidia" ]]; then
+        # Install Nvidia GPU drivers
+        pacman -S nvidia nvidia-utils nvidia-lts --noconfirm
         echo -e "\e[31mNvidia GPU drivers installed.\e[0m"
-else
-    echo -e "\e[31mInvalid choice for GPU. Please enter 'intel' or 'nvidia'.\e[0m"
-    exit 1
-fi
+        break
+    else
+        echo -e "\e[31mInvalid choice for GPU. Please enter 'intel' or 'nvidia'.\e[0m"
+    fi
+done
+
 
 clear
 
