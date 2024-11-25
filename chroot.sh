@@ -1,4 +1,5 @@
 #!/bin/bash
+clear
 
 # Set the root password
 partition3="${1}3"
@@ -24,6 +25,8 @@ pacman -S base-devel dosfstools grub efibootmgr gnome gnome-tweaks lvm2 mtools n
 
 sleep 1
 
+clear
+
 # Enable SSH service
 systemctl enable sshd
 
@@ -35,6 +38,7 @@ pacman -S linux linux-headers linux-lts linux-lts-headers --noconfirm
 # Install firmware packages
 pacman -S linux-firmware --noconfirm
 
+clear
 ##########################################################################
 
 # Ask the user about their GPU (Intel or Nvidia)
@@ -56,6 +60,8 @@ else
     echo -e "\e[31mInvalid choice for GPU. Please enter 'intel' or 'nvidia'.\e[0m"
     exit 1
 fi
+
+clear
 
 ##########################################################################
 
@@ -79,6 +85,8 @@ echo -e "\e[31mRegenerating initramfs for linux and linux-lts kernels...\e[0m"
 mkinitcpio -p linux
 mkinitcpio -p linux-lts
 
+
+clear
 ##########################################################################
 
 # Modify /etc/locale.gen to uncomment the desired locales (en_US.UTF-8 and de_DE.UTF-8)
@@ -98,6 +106,8 @@ grep -E "en_US.UTF-8|de_DE.UTF-8" /etc/locale.gen
 echo -e "\e[31mRunning locale-gen...\e[0m"
 locale-gen
 
+clear
+
 ##########################################################################
 
 # Modify /etc/default/grub to include cryptdevice option
@@ -111,6 +121,8 @@ echo -e "\e[31mUpdated GRUB_CMDLINE_LINUX_DEFAULT:\e[0m"
 grep "^GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub
 
 ##########################################################################
+
+clear
 
 # Create the EFI directory and mount the EFI partition
 echo -e "\e[31mCreating /boot/EFI and mounting the EFI partition...\e[0m"
@@ -127,6 +139,7 @@ if ! grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck; then
 fi
 
 
+clear
 ##########################################################################
 
 # Copy GRUB locale files for English and German
@@ -144,6 +157,7 @@ cp /usr/share/locale/de\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/de.mo
 echo -e "\e[31mRegenerating GRUB configuration file...\e[0m"
 grub-mkconfig -o /boot/grub/grub.cfg
 
+clear
 ##########################################################################
 
 # Enable necessary system services
@@ -151,6 +165,7 @@ echo -e "\e[31mEnabling GDM (GNOME Display Manager) and NetworkManager...\e[0m"
 systemctl enable gdm
 systemctl enable NetworkManager
 
+clear
 ##########################################################################
 
 # Exit the chroot environment
