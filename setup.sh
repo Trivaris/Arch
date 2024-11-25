@@ -82,20 +82,21 @@ vgcreate volgroup0 /dev/mapper/lvm
 
 # Create logical volume for root (user input or default 30GB)
 # Default values for logical volumes
-DEFAULT_LV_ROOT_SIZE="30G"
-DEFAULT_LV_HOME_SIZE="200G"
 
 # Prompt for lv_root size with default value
 echo -n "Enter size for lv_root (e.g., 30G for 30GB, press Enter for default 30GB): "
 read lv_root_size
-# If no input is provided, use the default value
-lv_root_size=${lv_root_size:-$DEFAULT_LV_ROOT_SIZE}
+if [ -z "$lv_root_size" ]; then
+    lv_root_size="30G"
+fi
 
 # Prompt for lv_home size with default value
 echo -n "Enter size for lv_home (e.g., 200G for 200GB, press Enter for default 200GB): "
 read lv_home_size
-# If no input is provided, use the default value
-lv_home_size=${lv_home_size:-$DEFAULT_LV_HOME_SIZE}
+if [ -z "$lv_home_size" ]; then
+    lv_home_size="200G"
+fi
+
 
 # Create logical volume for root
 lvcreate -L "$lv_root_size" volgroup0 -n lv_root
