@@ -133,8 +133,6 @@ echo -e "\e[31mCreating /boot/EFI and mounting the EFI partition...\e[0m"
 systemctl daemon-reload
 
 mount "${partition_prefix}1" /boot/EFI
-echo -e "\e[31m$partition_prefix\e[0m"
-exit 0
 
 # Install GRUB for UEFI systems
 echo -e "\e[31mInstalling GRUB for UEFI...\e[0m"
