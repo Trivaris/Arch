@@ -131,7 +131,6 @@ echo -e "\e[31mCreating /boot/EFI and mounting the EFI partition...\e[0m"
 
 systemctl daemon-reload
 
-mkdir /boot/EFI
 mount "${partition_prefix}1" /boot/EFI
 read test
 

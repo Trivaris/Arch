@@ -231,6 +231,8 @@ echo "Proceeding with arch-chroot..."
 curl -o /mnt/chroot.sh https://raw.githubusercontent.com/Trivaris/Arch/refs/heads/main/chroot.sh
 chmod +x /mnt/chroot.sh
 
+mkdir /mnt/boot/EFI
+
 # Chroot into the new system
 arch-chroot /mnt sh ./chroot.sh "$partition_prefix"
 
