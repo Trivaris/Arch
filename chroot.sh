@@ -1,15 +1,7 @@
 #!/bin/bash
 
 # Set the root password
-
-echo -n "Enter the LUKS partition (e.g., sda3): "
-read partition3
-
-if [[ "$partition3" =~ ^/dev/nvme ]]; then
-    partition_prefix="${partition3}p"
-else
-    partition_prefix="${partition3}"
-fi
+partition3="${1}3"
 
 echo -n "Enter the root password: "
 passwd

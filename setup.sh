@@ -226,7 +226,7 @@ curl -o /mnt/chroot.sh https://raw.githubusercontent.com/Trivaris/Arch/refs/head
 chmod +x /mnt/chroot.sh
 
 # Chroot into the new system
-arch-chroot /mnt sh ./chroot.sh
+arch-chroot /mnt sh ./chroot.sh "$partition_prefix"
 
 # Unmount all the filesystems
 echo "Unmounting all filesystems..."
