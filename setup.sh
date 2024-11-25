@@ -59,9 +59,11 @@ echo "Filesystems created: FAT32 on ${partition_prefix}1 and EXT4 on ${partition
 partition3="${partition_prefix}3"
 
 # LUKS encryption on partition 3
-echo -n "Enter passphrase for LUKS encryption: \n"
+echo -n "Enter passphrase for LUKS encryption: "
+echo -n ""
 read -s passphrase
 echo -n "Enter passphrase again: "
+echo -n ""
 read -s passphrase2
 
 if [ "$passphrase" != "$passphrase2" ]; then
@@ -220,83 +222,18 @@ echo "Proceeding with arch-chroot..."
 
 ##########################################################################
 
-# Define the script content
-setup_script="/mnt/setup.sh"
+curl -o /mnt/chroot.sh https://raw.githubusercontent.com/Trivaris/Arch/refs/heads/main/chroot.sh
+chmod +x /mnt/chroot.sh
 
-cat << 'EOF' > $setup_script
-#!/bin/bash
+# Chroot into the new system
+arch-chroot /mnt sh ./chroot.sh
 
-# Set the root password
-echo -n "Enter the root password: "
-passwd
+# Unmount all the filesystems
+echo "Unmounting all filesystems..."
+umount -a
 
-# Ask for a new username and create the user
-echo -n "Enter a username to create: "
-read username
-useradd -m -g users -G wheel "$username"
+##########################################################################
 
-# Set password for the new user
-echo -n "Enter the password for the user $username: "
-passwd "$username"
-
-# Install essential packages and desktop environment
-pacman -S base-devel dosfstools grub efibootmgr gnome gnome-tweaks lvm2 mtools nvim networkmanager openssh os-prober sudo --noconfirm
-
-# Enable SSH service
-systemctl enable sshd
-
-# Install the kernel and related packages
-pacman -S linux linux-headers linux-lts linux-lts-headers --noconfirm
-pacman -S linux-firmware --noconfirm
-
-# Ask the user about their GPU (Intel or Nvidia)
-echo -n "Do you have an Intel or Nvidia GPU? (intel/nvidia): "
-read gpu_choice
-if [[ "$gpu_choice" == "intel" ]]; then
-    pacman -S mesa intel-media-driver --noconfirm
-    echo "Intel GPU drivers installed."
-elif [[ "$gpu_choice" == "nvidia" ]]; then
-    pacman -S nvidia nvidia-utils nvidia-lts --noconfirm
-    echo "Nvidia GPU drivers installed."
-else
-    echo "Invalid choice for GPU."
-    exit 1
-fi
-
-# Modify /etc/mkinitcpio.conf to add "encrypt" and "lvm2"
-cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
-sed -i 's/\(HOOKS=\([^\)]*\)block\)/\1 encrypt lvm2/' /etc/mkinitcpio.conf
-mkinitcpio -p linux
-mkinitcpio -p linux-lts
-
-# Enable locales
-sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-sed -i 's/^#de_DE.UTF-8/de_DE.UTF-8/' /etc/locale.gen
-locale-gen
-
-# Update GRUB config for encryption
-sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 cryptdevice=\/dev\/'$partition3':volgroup0/' /etc/default/grub
-
-# Mount EFI and install GRUB
-mkdir -p /boot/EFI
-mount "${partition_prefix}1" /boot/EFI
-grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-grub-mkconfig -o /boot/grub/grub.cfg
-
-# Enable system services
-systemctl enable gdm NetworkManager
-
-echo "Setup finished successfully. Please reboot."
-EOF
-
-# Make the script executable
-chmod +x $setup_script
-
-# Run the script in the chroot environment
-arch-chroot /mnt /bin/bash /setup.sh
-
-# Clean up: Remove the script after execution
-rm $setup_script
-
-# Final message
-echo "Setup script executed and cleaned up. You can reboot now."
+# Final message to the user
+echo "The script has finished successfully."
+echo "Please reboot your system now."
